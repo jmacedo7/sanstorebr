@@ -38,6 +38,7 @@ const products = [
   { id: 'xit-disfarcado-premium', name: 'Xit disfarçado premium', folder: 'xit-ff-mobile', image: 'banner.jfif', desc: 'Produto digital para Free Fire Mobile.', tag: 'MOBILE', category: 'xit-ff-mobile', price: 5.99, available: true },
   { id: 'proxy-premium', name: 'Proxy premium', folder: 'xit-ff-mobile', image: 'banner.jfif', desc: 'Produto digital para Free Fire Mobile.', tag: 'MOBILE', category: 'xit-ff-mobile', price: 5.99, available: true },
   { id: 'yellow-aimbot', name: 'Yellow aimbot', folder: 'xit-ff-mobile', image: 'banner.jfif', desc: 'Produto digital para Free Fire Mobile.', tag: 'MOBILE', category: 'xit-ff-mobile', price: 6.99, available: true },
+  { id: 'ff-2022', name: 'FF 2022', folder: 'xit-ff-mobile', image: 'bbdf3a88-b4a4-4a7c-82ff-f030b235710f.jfif', desc: 'Produto digital para Free Fire Mobile.', tag: 'MOBILE', category: 'xit-ff-mobile', price: 6.99, available: true },
   { id: 'cloud-pc-rtx-5070', name: 'Cloud PC RTX 5070', folder: 'cloud-pc-rtx-5070', image: 'banner.jfif', desc: 'Conheça o Cloud PC RTX 5070.', tag: 'CLOUD PC', category: 'cloud-pcs-jogos', price: 8.9, available: true },
   { id: 'pc-virtual-rtx-3060', name: 'PC Virtual RTX 3060', folder: 'pc-virtual-rtx-3060', image: 'banner.jfif', desc: 'Conheça o PC Virtual RTX 3060.', tag: 'PC VIRTUAL', category: 'cloud-pcs-jogos', price: 7.59, available: true },
   { id: 'gta-5-lite', name: 'GTA 5 LITE', folder: 'gta-5-lite', image: 'banner.jfif', desc: 'Versão Lite de GTA 5.', tag: 'GAME', category: 'cloud-pcs-jogos', price: 9.99, available: true },
