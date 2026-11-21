@@ -153,3 +153,24 @@ body{background:#fff;color:#202126}
 @media(prefers-reduced-motion:reduce){.bestseller-track{scroll-behavior:auto}}
 
 .bestseller-track .featured-content h3{color:#fff}
+
+/* One category browser with a single product result grid. */
+.category-menu .category-card.selected{border-color:#d92332;box-shadow:0 0 0 2px #d9233218,0 14px 30px #20212614}
+.category-menu .category-card.selected .category-card-title svg{color:#d92332}
+.catalog-results{scroll-margin-top:88px;margin-top:30px;min-height:80px}
+.catalog-results .empty-category{border-radius:8px;background:#fff;padding:36px 20px}
+.catalog-results .product-grid{margin-top:12px}
+.catalog-toolbar{align-items:center}
+.back-to-shelves{padding:9px 12px;border:1px solid #d9233240;border-radius:4px;background:#d923320a}
+.support-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.support-actions .btn{white-space:nowrap}
+.whatsapp-button{background:#159447!important}
+.whatsapp-button:hover{background:#0e7b39!important}
+.whatsapp-float{position:fixed;z-index:9;right:24px;bottom:84px;width:52px;height:52px;border:1px solid #ffffff60;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#159447;color:#fff;box-shadow:0 8px 25px #0003;transition:transform .2s;text-decoration:none}
+.whatsapp-float:hover{transform:translateY(-4px) scale(1.04)}
+.whatsapp-float span{position:absolute;right:62px;white-space:nowrap;background:#fff;color:#202126;border:1px solid #20212618;border-radius:5px;padding:8px 11px;font-size:10px;opacity:0;transform:translateX(5px);transition:.2s;pointer-events:none;box-shadow:0 5px 18px #0001}
+.whatsapp-float:hover span,.whatsapp-float:focus-visible span{opacity:1;transform:none}
+.product-link{background:#159447;color:#fff;border-color:#159447}
+.product-link:hover{background:#0e7b39}
+@media(max-width:900px){.support-actions{gap:8px}.support-actions .btn{padding-inline:12px;font-size:9px}}
+@media(max-width:640px){.category-menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalog-results{margin-top:22px}.catalog-toolbar{align-items:flex-start}.support-actions{align-items:stretch;flex-direction:column;width:100%}.support-actions .btn{justify-content:center;width:100%}.whatsapp-float{width:48px;height:48px;right:15px;bottom:78px}.discord-float{bottom:15px}}
