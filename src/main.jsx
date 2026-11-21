@@ -6,6 +6,7 @@ import './style.css';
 const discord = 'https://discord.com/invite/PcM7ntRnj';
 const tiktok = 'https://www.tiktok.com/@santxs.1v1010';
 const WHATSAPP_NUMBER = '557598164933';
+const PIX_KEY = 'ab3f0dbd-0485-45b5-aec5-80ea5ae4bb9e';
 const supportWhatsApp = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Preciso de suporte humano da SAN Store BR.')}`;
 
 const categories = [
@@ -52,7 +53,8 @@ const benefits = [
 ];
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-const productWhatsApp = (product) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Gostaria de saber mais sobre ${product.name} na SAN Store BR.`)}`;
+const paymentWhatsApp = (product) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Já realizei o pagamento do produto ${product.name} no valor de ${money(product.price)}. Segue o comprovante.`)}`;
+const sellerWhatsApp = (product) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Tenho mais dúvidas e gostaria de comprar o produto ${product.name} por ${money(product.price)} diretamente com o vendedor.`)}`;
 const productImage = (product) => {
   const path = product.folder
     ? `/produtos/${product.folder}/${product.image}`
@@ -67,8 +69,15 @@ function App() {
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [purchaseProduct, setPurchaseProduct] = useState(null);
+  const [pixCopied, setPixCopied] = useState(false);
   const bestsellerTrack = useRef(null);
   const close = () => setMenu(false);
+  const openPurchase = (product) => { setPixCopied(false); setPurchaseProduct(product); };
+  const copyPixKey = async () => {
+    try { await navigator.clipboard.writeText(PIX_KEY); setPixCopied(true); }
+    catch { setPixCopied(false); }
+  };
   const showCategory = (id) => {
     setActiveCategory(id);
     close();
@@ -84,6 +93,18 @@ function App() {
     document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
     return () => { window.removeEventListener('scroll', onScroll); io.disconnect(); };
   }, []);
+
+  useEffect(() => {
+    if (!purchaseProduct) return;
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => { if (event.key === 'Escape') setPurchaseProduct(null); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [purchaseProduct]);
 
   useEffect(() => {
     const track = bestsellerTrack.current;
@@ -167,7 +188,7 @@ function App() {
 
   const productCard = (product, index) => <article className="product-card reveal visible" style={{ '--delay': `${index * 45}ms` }} key={product.id}>
     <div className="product-image"><img loading="lazy" src={productImage(product)} alt={`Imagem de ${product.name}`} onError={(event) => { event.currentTarget.src = '/identidade/bannersemtexto.jfif'; }}/><span className="product-tag">{product.tag}</span><span className="image-arrow"><ArrowUpRight size={16}/></span></div>
-    <div className="product-info"><div><h3>{product.name}</h3><p>{product.desc}</p></div><div className="product-price-row"><strong>{Number.isFinite(product.price) ? money(product.price) : 'Consulte a loja'}</strong><span className={product.available ? 'availability available' : 'availability'}>{product.available ? 'Disponível' : 'Em breve'}</span></div><a className="product-link" href={productWhatsApp(product)} target="_blank" rel="noreferrer">Falar no WhatsApp <ArrowUpRight size={14}/></a></div>
+    <div className="product-info"><div><h3>{product.name}</h3><p>{product.desc}</p></div><div className="product-price-row"><strong>{Number.isFinite(product.price) ? money(product.price) : 'Consulte a loja'}</strong><span className={product.available ? 'availability available' : 'availability'}>{product.available ? 'Disponível' : 'Em breve'}</span></div><button className="product-link" type="button" disabled={!product.available || !Number.isFinite(product.price)} onClick={() => openPurchase(product)}>Comprar <ArrowRight size={14}/></button></div>
   </article>;
 
   const categoriesWithProducts = categories.map((category) => ({ ...category, items: products.filter((product) => product.category === category.id) }));
@@ -197,6 +218,14 @@ function App() {
     <footer className="footer"><div className="wrap"><div className="footer-main"><a href="#inicio" className="brand footer-brand"><img src="/identidade/logo.jpeg" alt=""/><span>SAN STORE <b>BR</b></span></a><p>Produtos digitais, tecnologia e comunidade gamer. Atendimento via Discord e WhatsApp.</p><div className="footer-social"><a href={discord} target="_blank" rel="noreferrer">Discord <ArrowUpRight size={15}/></a><a href={tiktok} target="_blank" rel="noreferrer">TikTok <ArrowUpRight size={15}/></a><a href={supportWhatsApp} target="_blank" rel="noreferrer">WhatsApp <ArrowUpRight size={15}/></a></div></div><div className="footer-bottom"><span>© 2026 SAN STORE BR &amp; D7 STUDIO. Todos os direitos reservados.</span><span>Fundação em 16/10/2026</span><div><a href="#inicio">Início</a><a href="#categorias">Categorias</a><a href="#catalogo">Produtos</a><a href="#suporte">Suporte</a></div></div></div></footer>
     <a className="whatsapp-float" href={supportWhatsApp} target="_blank" rel="noreferrer" aria-label="Falar com suporte humano no WhatsApp"><MessageCircle size={20}/><span>Suporte humano</span></a>
     <a className="discord-float" href={discord} target="_blank" rel="noreferrer" aria-label="Acessar Discord da SAN STORE BR"><MessageCircle size={20}/><span>Fale com a loja</span></a>
+    {purchaseProduct && <div className="purchase-backdrop" onClick={() => setPurchaseProduct(null)}><section className="purchase-dialog" role="dialog" aria-modal="true" aria-labelledby="purchase-title" onClick={(event) => event.stopPropagation()}>
+      <div className="purchase-dialog-header"><div><span className="eyebrow"><span className="eyebrow-mark">SAN STORE BR</span> PAGAMENTO VIA PIX</span><h2 id="purchase-title">Finalize sua <em>compra.</em></h2></div><button className="purchase-close" type="button" aria-label="Fechar janela de compra" onClick={() => setPurchaseProduct(null)}><X size={20}/></button></div>
+      <div className="purchase-product"><img src={productImage(purchaseProduct)} alt=""/><div><span>PRODUTO</span><strong>{purchaseProduct.name}</strong></div><div className="purchase-price"><span>VALOR</span><strong>{money(purchaseProduct.price)}</strong></div></div>
+      <div className="pix-key-box"><div><span>CHAVE PIX</span><strong>{PIX_KEY}</strong></div><button type="button" onClick={copyPixKey}>{pixCopied ? 'Chave copiada' : 'Copiar chave'}</button></div>
+      <p className="receipt-notice" role="note"><MessageCircle size={18}/> Ap&oacute;s o pagamento, anexe o comprovante na conversa do WhatsApp antes de enviar a mensagem.</p>
+      <a className="purchase-action payment-confirmation" href={paymentWhatsApp(purchaseProduct)} target="_blank" rel="noreferrer">J&aacute; paguei {purchaseProduct.name} — {money(purchaseProduct.price)}; enviar comprovante <ArrowUpRight size={17}/></a>
+      <a className="purchase-action seller-question" href={sellerWhatsApp(purchaseProduct)} target="_blank" rel="noreferrer">Tenho d&uacute;vidas e quero comprar {purchaseProduct.name} por {money(purchaseProduct.price)} direto com o vendedor <ArrowUpRight size={17}/></a>
+    </section></div>}
   </>;
 }
 
