@@ -151,3 +151,5 @@ body{background:#fff;color:#202126}
 @media(max-width:900px){.bestseller-track .featured-card{flex-basis:calc((100% - 18px)/2);height:330px}}
 @media(max-width:640px){.featured{padding:62px 0 52px}.featured .section-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:22px}.featured .section-head h2{font-size:clamp(38px,10vw,50px)}.carousel-controls{gap:7px}.carousel-controls>span{display:none}.carousel-controls button{width:36px;height:36px}.bestseller-track{gap:12px;margin-right:-18px;width:calc(100% + 18px);padding:2px 18px 14px 1px}.bestseller-track .featured-card{flex:0 0 82%;height:clamp(270px,82vw,340px)}.bestseller-track .featured-content{inset:auto 17px 17px;max-width:92%}.bestseller-track .featured-content h3{font-size:34px}.bestseller-track .featured-content p{font-size:11px}.bestseller-track .featured-content .btn{height:42px}.catalog-toolbar{align-items:flex-start}.back-to-shelves{padding:0}}
 @media(prefers-reduced-motion:reduce){.bestseller-track{scroll-behavior:auto}}
+
+.bestseller-track .featured-content h3{color:#fff}

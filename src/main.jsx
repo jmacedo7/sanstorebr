@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowDown, ArrowRight, ArrowUpRight, Menu, X, Gamepad2, Headset, UsersRound, MessageCircle, Clock3, Sparkles, Tag, ChevronRight } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Menu, X, Gamepad2, Headset, UsersRound, MessageCircle, Clock3, Sparkles, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import './style.css';
 
 const discord = 'https://discord.com/invite/PcM7ntRnj';
