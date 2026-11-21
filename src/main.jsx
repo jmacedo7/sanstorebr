@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ArrowDown, ArrowRight, ArrowUpRight, Menu, X, Gamepad2, Headset, UsersRound, MessageCircle, Clock3, Sparkles, Tag, ChevronRight } from 'lucide-react';
 import './style.css';
@@ -64,6 +64,7 @@ function App() {
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
+  const bestsellerTrack = useRef(null);
   const close = () => setMenu(false);
   const showCategory = (id) => {
     setActiveCategory(id);
@@ -81,13 +82,93 @@ function App() {
     return () => { window.removeEventListener('scroll', onScroll); io.disconnect(); };
   }, []);
 
+  useEffect(() => {
+    const track = bestsellerTrack.current;
+    if (!track) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let timer;
+    let resumeTimer;
+    let hoverPaused = false;
+    let dragStartX = 0;
+    let dragStartScroll = 0;
+    let dragging = false;
+    const stop = () => window.clearInterval(timer);
+    const advance = () => {
+      const card = track.querySelector('.featured-card');
+      if (!card) return;
+      const gap = parseFloat(getComputedStyle(track).gap) || 0;
+      const step = card.getBoundingClientRect().width + gap;
+      const max = track.scrollWidth - track.clientWidth;
+      if (max <= 2) return;
+      if (track.scrollLeft >= max - step / 2) track.scrollTo({ left: 0, behavior: 'smooth' });
+      else track.scrollBy({ left: step, behavior: 'smooth' });
+    };
+    const start = () => {
+      stop();
+      if (!reducedMotion && !hoverPaused) timer = window.setInterval(advance, 4200);
+    };
+    const pauseBriefly = () => {
+      stop();
+      window.clearTimeout(resumeTimer);
+      if (!hoverPaused && !reducedMotion) resumeTimer = window.setTimeout(start, 6500);
+    };
+    const onWheel = (event) => {
+      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        event.preventDefault();
+        track.scrollBy({ left: event.deltaY, behavior: 'smooth' });
+        pauseBriefly();
+      }
+    };
+    const onEnter = () => { hoverPaused = true; stop(); window.clearTimeout(resumeTimer); };
+    const onLeave = () => { hoverPaused = false; start(); };
+    const onPointerDown = (event) => {
+      pauseBriefly();
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      dragging = true;
+      dragStartX = event.clientX;
+      dragStartScroll = track.scrollLeft;
+      track.classList.add('is-dragging');
+      track.setPointerCapture(event.pointerId);
+    };
+    const onPointerMove = (event) => {
+      if (dragging) track.scrollLeft = dragStartScroll - (event.clientX - dragStartX);
+    };
+    const onPointerUp = () => { dragging = false; track.classList.remove('is-dragging'); };
+    track.addEventListener('wheel', onWheel, { passive: false });
+    track.addEventListener('pointerenter', onEnter);
+    track.addEventListener('pointerleave', onLeave);
+    track.addEventListener('pointerdown', onPointerDown);
+    track.addEventListener('pointermove', onPointerMove);
+    track.addEventListener('pointerup', onPointerUp);
+    track.addEventListener('pointercancel', onPointerUp);
+    track.addEventListener('touchstart', pauseBriefly, { passive: true });
+    track.addEventListener('focusin', onEnter);
+    track.addEventListener('focusout', onLeave);
+    start();
+    return () => {
+      stop(); window.clearTimeout(resumeTimer);
+      track.removeEventListener('wheel', onWheel);
+      track.removeEventListener('pointerenter', onEnter);
+      track.removeEventListener('pointerleave', onLeave);
+      track.removeEventListener('pointerdown', onPointerDown);
+      track.removeEventListener('pointermove', onPointerMove);
+      track.removeEventListener('pointerup', onPointerUp);
+      track.removeEventListener('pointercancel', onPointerUp);
+      track.removeEventListener('touchstart', pauseBriefly);
+      track.removeEventListener('focusin', onEnter);
+      track.removeEventListener('focusout', onLeave);
+    };
+  }, [activeCategory]);
+
+  const moveBestsellers = (direction) => bestsellerTrack.current?.scrollBy({ left: direction * bestsellerTrack.current.clientWidth * 0.78, behavior: 'smooth' });
+
   const productCard = (product, index) => <article className="product-card reveal visible" style={{ '--delay': `${index * 45}ms` }} key={product.id}>
     <div className="product-image"><img loading="lazy" src={productImage(product)} alt={`Imagem de ${product.name}`} onError={(event) => { event.currentTarget.src = '/identidade/bannersemtexto.jfif'; }}/><span className="product-tag">{product.tag}</span><span className="image-arrow"><ArrowUpRight size={16}/></span></div>
     <div className="product-info"><div><h3>{product.name}</h3><p>{product.desc}</p></div><div className="product-price-row"><strong>{Number.isFinite(product.price) ? money(product.price) : 'Consulte a loja'}</strong><span className={product.available ? 'availability available' : 'availability'}>{product.available ? 'Disponível' : 'Em breve'}</span></div><a className="product-link" href={discord} target="_blank" rel="noreferrer">Consultar pelo Discord <ArrowUpRight size={14}/></a></div>
   </article>;
 
   const categoriesWithProducts = categories.map((category) => ({ ...category, items: products.filter((product) => product.category === category.id) }));
-  const featured = ['gta-5-lite', 'cloud-pc-rtx-5070', 'netflix-premium', 'xbox-ultimo-30-dias'].map((id) => products.find((product) => product.id === id)).filter(Boolean);
+  const featured = ['pc-virtual-rtx-3060', 'gta-5-lite', 'netflix-premium', 'xbox-ultimo-30-dias'].map((id) => products.find((product) => product.id === id)).filter(Boolean);
   const featuredIds = new Set(featured.map((product) => product.id));
   const selectedProducts = activeCategory === 'all' ? products : products.filter((product) => product.category === activeCategory);
 
@@ -100,9 +181,9 @@ function App() {
     </div></header>
     <main>
       <section id="inicio" className="hero"><div className="hero-grid wrap"><div className="hero-copy"><div className="eyebrow"><span className="live-dot"/> LOJA DIGITAL • COMUNIDADE GAMER</div><h1>SUA LOJA DIGITAL<br/>DE <em>CONFIANÇA.</em></h1><p>Games, PCs virtuais e produtos digitais para a sua comunidade. Encontre sua próxima novidade na SAN Store BR.</p><div className="hero-actions"><a className="btn primary" href="#categorias">Explorar categorias <ArrowRight size={17}/></a><a className="btn secondary" href={discord} target="_blank" rel="noreferrer">Fale com a loja <ArrowUpRight size={17}/></a></div><div className="hero-note"><span className="note-line"/> Atendimento pelo Discord</div></div><div className="hero-art"><div className="art-glow"/><img className="mascot" src="/identidade/bannersemtexto.jfif" alt="Mascote Tio Patinhas da SAN STORE BR"/><div className="art-caption"><span>SAN STORE BR</span><span>PRODUTOS DIGITAIS</span></div><div className="art-mark">SAN<br/><b>STORE</b></div></div></div><a className="scroll-cue" href="#destaques" aria-label="Descer para os destaques"><ArrowDown size={16}/><span>ROLE PARA EXPLORAR</span></a><div className="hero-orbit orbit-one"/><div className="hero-orbit orbit-two"/></section>
-      {activeCategory === 'all' && <section id="destaques" className="section featured"><div className="wrap"><div className="section-head reveal"><div><div className="eyebrow"><span className="eyebrow-mark">01</span> ESCOLHIDOS PARA VOCÊ</div><h2>DESTAQUES <em>DA LOJA</em></h2></div><p>Explore alguns dos produtos mais procurados da SAN Store BR.</p></div><div className="featured-grid">{featured.map((product, i) => <article className={`featured-card featured-${i % 2 === 0 ? 'gta' : 'cloud'} reveal`} key={product.id}><img src={productImage(product)} alt={`Imagem de ${product.name}`}/><div className="featured-shade"/><div className="featured-content"><span className="featured-kicker">EM DESTAQUE</span><h3>{product.name}</h3><p>{product.desc}</p><button onClick={() => showCategory(product.category)} className="btn primary">Ver categoria <ArrowRight size={16}/></button></div></article>)}</div></div></section>}
+      {activeCategory === 'all' && <section id="destaques" className="section featured"><div className="wrap"><div className="section-head reveal"><div><div className="eyebrow"><span className="eyebrow-mark">01</span> SELEÇÃO SAN STORE</div><h2>MAIS <em>VENDIDOS</em></h2></div><div className="carousel-controls"><span>Deslize para explorar</span><button aria-label="Anterior" onClick={() => moveBestsellers(-1)}><ChevronLeft size={18}/></button><button aria-label="Próximo" onClick={() => moveBestsellers(1)}><ChevronRight size={18}/></button></div></div><div className="featured-grid bestseller-track" ref={bestsellerTrack} aria-label="Produtos mais vendidos">{featured.map((product, i) => <article className={`featured-card featured-${i % 2 === 0 ? 'gta' : 'cloud'} reveal visible`} key={product.id}><img src={productImage(product)} alt={`Imagem de ${product.name}`}/><div className="featured-shade"/><div className="featured-content"><span className="featured-kicker">MAIS VENDIDO</span><h3>{product.name}</h3><p>{product.desc}</p><button onClick={() => showCategory(product.category)} className="btn primary">Explorar produto <ArrowRight size={16}/></button></div></article>)}</div></div></section>}
       <section id="categorias" className="section popular"><div className="wrap"><div className="section-head reveal"><div><div className="eyebrow"><span className="eyebrow-mark">02</span> EXPLORE A LOJA</div><h2>CATEGORIAS <em>POPULARES</em></h2></div><p>Escolha uma categoria e encontre os produtos disponíveis.</p></div><div className="category-cards">{categoriesWithProducts.map((category, index) => <button className="category-card reveal" key={category.id} onClick={() => showCategory(category.id)}><span className="category-art"><img src={category.items[0] ? productImage(category.items[0]) : '/identidade/bannersemtexto.jfif'} alt=""/><span className="category-art-shade"/><span className="category-icon">{category.icon}</span><span className="category-count">{category.items.length} PRODUTOS</span></span><span className="category-card-title">{category.name}<ChevronRight size={17}/></span></button>)}</div></div></section>
-      <section id="catalogo" className="section catalog"><div className="wrap"><div className="section-head reveal"><div><div className="eyebrow"><span className="eyebrow-mark">03</span> CATÁLOGO SAN STORE</div><h2>ENCONTRE O QUE<br/><em>COMBINA COM VOCÊ.</em></h2></div><p>Consulte os produtos e fale diretamente com a loja pelo Discord.</p></div><nav className="category-nav" aria-label="Categorias do catálogo"><button className={`category-chip ${activeCategory === 'all' ? 'selected' : ''}`} aria-pressed={activeCategory === 'all'} onClick={() => setActiveCategory('all')}><span className="category-icon">✦</span>Todos</button>{categories.map((category) => <button key={category.id} className={`category-chip ${activeCategory === category.id ? 'selected' : ''}`} aria-pressed={activeCategory === category.id} onClick={() => setActiveCategory(category.id)}><span className="category-icon">{category.icon}</span>{category.name}</button>)}</nav><div className="catalog-toolbar"><span>{activeCategory === 'all' ? 'Todos os produtos' : categories.find((category) => category.id === activeCategory)?.name}</span><a className="filter-all" href={discord} target="_blank" rel="noreferrer">Dúvidas? Chame no Discord <ArrowUpRight size={14}/></a></div>{activeCategory === 'all' ? <div className="empty-category"><h3>Explore o catálogo por categoria</h3><p>Escolha uma categoria acima para ver os produtos disponíveis. As vitrines completas estão logo abaixo.</p></div> : selectedProducts.length ? <div className="product-grid">{selectedProducts.map(productCard)}</div> : <div className="empty-category"><h3>Produtos desta categoria em breve</h3><p>Confira as novidades no Discord da SAN Store BR.</p></div>}</div></section>
+      <section id="catalogo" className="section catalog"><div className="wrap"><div className="section-head reveal"><div><div className="eyebrow"><span className="eyebrow-mark">03</span> CATÁLOGO SAN STORE</div><h2>ENCONTRE O QUE<br/><em>COMBINA COM VOCÊ.</em></h2></div><p>Consulte os produtos e fale diretamente com a loja pelo Discord.</p></div><nav className="category-nav" aria-label="Categorias do catálogo">{categories.map((category) => <button key={category.id} className={`category-chip ${activeCategory === category.id ? 'selected' : ''}`} aria-pressed={activeCategory === category.id} onClick={() => setActiveCategory(category.id)}><span className="category-icon">{category.icon}</span>{category.name}</button>)}</nav><div className="catalog-toolbar"><span>{activeCategory === 'all' ? 'Escolha uma categoria para explorar' : categories.find((category) => category.id === activeCategory)?.name}</span>{activeCategory !== 'all' && <button className="back-to-shelves" onClick={() => setActiveCategory('all')}>Voltar às vitrines</button>}<a className="filter-all" href={discord} target="_blank" rel="noreferrer">Dúvidas? Chame no Discord <ArrowUpRight size={14}/></a></div>{activeCategory === 'all' ? <div className="empty-category"><h3>Explore o catálogo por categoria</h3><p>Escolha uma categoria acima para ver os produtos disponíveis. As vitrines completas estão logo abaixo.</p></div> : selectedProducts.length ? <div className="product-grid">{selectedProducts.map(productCard)}</div> : <div className="empty-category"><h3>Produtos desta categoria em breve</h3><p>Confira as novidades no Discord da SAN Store BR.</p></div>}</div></section>
       {activeCategory === 'all' && categoriesWithProducts.map((category, i) => category.items.length > 0 && <section className={`category-shelf shelf-${i % 2}`} key={category.id}><div className="wrap"><div className="shelf-heading"><div><div className="eyebrow"><span className="eyebrow-mark">0{i + 4}</span> VITRINE SAN STORE</div><h2>{category.name}</h2></div><button className="view-category" onClick={() => showCategory(category.id)}>Ver todos os produtos <ArrowRight size={16}/></button></div><div className="product-grid">{category.items.filter((product) => !featuredIds.has(product.id)).slice(0, 4).map(productCard)}</div></div></section>)}
       <section className="community"><div className="community-inner wrap reveal"><div className="community-stamp"><Sparkles size={25}/><span>SS<br/>BR</span></div><div className="community-copy"><div className="eyebrow"><span className="live-dot"/> NOS ENCONTRAMOS NO DISCORD</div><h2>Faça parte da comunidade<br/><em>SAN STORE BR.</em></h2><p>Conheça nossos produtos e fale diretamente com a equipe.</p></div><a className="btn light" href={discord} target="_blank" rel="noreferrer">Entrar na comunidade <ArrowUpRight size={17}/></a><div className="community-lines"/></div></section>
       <section id="sobre" className="section about"><div className="wrap about-grid"><div className="about-visual reveal"><div className="about-frame"><video src="/identidade/logo_animada.mp4" autoPlay muted loop playsInline aria-label="Logo animada da SAN STORE BR"/></div><div className="since-card"><span>DESDE</span><b>16.10.26</b></div></div><div className="about-copy reveal"><div className="eyebrow"><span className="eyebrow-mark">01</span> SOBRE NÓS</div><h2>Digital, gamer<br/>e <em>feito pra comunidade.</em></h2><p>A SAN STORE BR reúne diferentes produtos digitais e soluções em um só lugar, com atendimento próximo e uma comunidade para encontrar novas opções.</p><p>Uma loja de produtos digitais presente na comunidade gamer e tecnológica.</p><a className="text-link" href={discord} target="_blank" rel="noreferrer">Conheça nossa comunidade <ArrowRight size={16}/></a></div></div></section>
